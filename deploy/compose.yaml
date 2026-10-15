@@ -1,0 +1,23 @@
+# Example deployment. Run from this directory: docker compose up -d --build
+# HEKA_VAULT_DATA must be a mode-700 directory owned by HEKA_VAULT_UID. It holds vault.db and
+# master.key: back up both together, and never put master.key next to off-host DB backups.
+services:
+  vault:
+    build: ..
+    container_name: heka-vault
+    restart: unless-stopped
+    user: "${HEKA_VAULT_UID:-1000}:${HEKA_VAULT_GID:-1000}"
+    ports:
+      - "${HEKA_VAULT_BIND:-0.0.0.0}:${HEKA_VAULT_PORT:-8090}:8090"
+    volumes:
+      - "${HEKA_VAULT_DATA:-./data}:/data"
+    healthcheck:
+      test: [
+        "CMD",
+        "deno",
+        "eval",
+        "const r = await fetch('http://127.0.0.1:8090/api/v1/health'); if (!r.ok) Deno.exit(1)",
+      ]
+      interval: 30s
+      timeout: 5s
+      retries: 3

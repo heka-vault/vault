@@ -1,0 +1,7 @@
+data/
+deploy/data/
+*.db
+*.db-*
+*.key
+*.env
+!skill/**/*.env.example
