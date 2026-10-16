@@ -49,6 +49,39 @@ export interface AuditEntry {
   key: string | null;
 }
 
+export interface AuditQuery {
+  project?: string;
+  actor?: string;
+  /** Action prefixes, any of which may match: `["key."]` finds key.create(read) and key.revoke. */
+  actions?: string[];
+  /** Action prefixes to leave out: `["secrets.list"]` hides folder listings. */
+  except?: string[];
+  before?: number;
+  after?: number;
+}
+
+/** The parameterised where clause for an AuditQuery. */
+function auditWhere(q: AuditQuery): [string, (string | number)[]] {
+  const where: string[] = [];
+  const args: (string | number)[] = [];
+  const add = (sql: string, ...values: (string | number)[]) => {
+    where.push(sql);
+    args.push(...values);
+  };
+  if (q.project) add("project = ?", q.project);
+  if (q.actor) add("actor = ?", q.actor);
+  if (q.actions?.length) {
+    add(
+      `(${q.actions.map(() => "substr(action, 1, ?) = ?").join(" or ")})`,
+      ...q.actions.flatMap((a) => [a.length, a]),
+    );
+  }
+  for (const a of q.except ?? []) add("substr(action, 1, ?) <> ?", a.length, a);
+  if (q.before !== undefined) add("id < ?", q.before);
+  if (q.after !== undefined) add("id > ?", q.after);
+  return [where.length ? ` where ${where.join(" and ")}` : "", args];
+}
+
 export class VaultError extends Error {
   constructor(readonly status: 400 | 401 | 403 | 404 | 409, message: string) {
     super(message);
@@ -110,6 +143,8 @@ create table if not exists audit (
   path text,
   key text
 );
+create index if not exists audit_project on audit(project, id);
+create index if not exists audit_actor on audit(actor, id);
 `;
 
 /** Normalize a folder path to "/" or "/a/b" (no trailing slash). */
@@ -448,15 +483,39 @@ export class Vault {
 
   // ---------- audit ----------
 
-  listAudit(who: Principal, opts: { project?: string; limit?: number } = {}): AuditEntry[] {
+  /**
+   * Audit entries, newest first. Paged by id: `before` gives the entries older than an id, `after`
+   * the `limit` entries just newer than it (still returned newest first).
+   */
+  listAudit(who: Principal, opts: AuditQuery & { limit?: number } = {}): AuditEntry[] {
     this.#requireAdmin(who);
-    const limit = Math.min(Math.max(opts.limit ?? 200, 1), 1000);
-    return (opts.project
-      ? this.#db.prepare("select * from audit where project = ? order by id desc limit ?")
-        .all(opts.project, limit)
-      : this.#db.prepare("select * from audit order by id desc limit ?").all(
-        limit,
-      )) as unknown as AuditEntry[];
+    const n = Number(opts.limit ?? 200);
+    const limit = Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), 1), 1000) : 200;
+    const [where, args] = auditWhere(opts);
+    const order = opts.after === undefined ? "desc" : "asc";
+    const rows = this.#db.prepare(`select * from audit${where} order by id ${order} limit ?`)
+      .all(...args, limit) as unknown as AuditEntry[];
+    return order === "asc" ? rows.reverse() : rows;
+  }
+
+  /** How many audit entries match (the same filters as listAudit). */
+  countAudit(who: Principal, opts: AuditQuery = {}): number {
+    this.#requireAdmin(who);
+    const [where, args] = auditWhere(opts);
+    return (this.#db.prepare(`select count(*) as n from audit${where}`).get(...args) as {
+      n: number;
+    }).n;
+  }
+
+  /** Every project and actor that appears in the audit log, deleted projects included. */
+  auditFacets(who: Principal): { projects: string[]; actors: string[] } {
+    this.#requireAdmin(who);
+    const distinct = (col: "project" | "actor") =>
+      (this.#db.prepare(
+        `select distinct ${col} as v from audit where ${col} is not null order by v`,
+      )
+        .all() as { v: string }[]).map((r) => r.v);
+    return { projects: distinct("project"), actors: distinct("actor") };
   }
 
   // ---------- internals ----------
