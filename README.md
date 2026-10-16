@@ -62,11 +62,12 @@ curl -fsS -H "Authorization: Bearer $HEKA_VAULT_TOKEN" \
 
 ## Layout
 
-| Path             | What                                                                                                 |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `src/vault.ts`   | The domain: schema, encryption, authorization, audit. Every operation takes the calling `Principal`. |
-| `src/api.ts`     | JSON API under `/api/v1`.                                                                            |
-| `src/web.tsx`    | Server-rendered UI (Hono JSX, plain forms, a little vanilla JS).                                     |
-| `src/openapi.ts` | Hand-written OpenAPI 3.1 spec.                                                                       |
-| `src/dotenv.ts`  | `.env` parse/format.                                                                                 |
-| `main.ts`        | Config, `serve`, and `create-admin-key`.                                                             |
+| Path             | What                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `src/vault.ts`   | The domain: schema, encryption, authorization, audit. Every operation takes the calling `Principal`.                         |
+| `src/api.ts`     | JSON API under `/api/v1`.                                                                                                    |
+| `src/web.tsx`    | Server-rendered UI: auth middleware, error handling, and the feature modules in `src/web/`.                                  |
+| `src/web/`       | One module per page (Hono JSX, plain forms); shared shell, styles, and vanilla JS in `layout.tsx`, `styles.ts`, `client.ts`. |
+| `src/openapi.ts` | Hand-written OpenAPI 3.1 spec.                                                                                               |
+| `src/dotenv.ts`  | `.env` parse/format.                                                                                                         |
+| `main.ts`        | Config, `serve`, and `create-admin-key`.                                                                                     |
