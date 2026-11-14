@@ -20,7 +20,7 @@ export const css = keyTableCss + `
 .p-settings .envs,.p-settings .steps,.p-settings .panel.danger{max-width:var(--w-form)}
 .p-settings .envs col.actions{--actions:2}
 .p-settings a.env{overflow-wrap:anywhere}
-.p-settings a.env.prod::before{content:"";display:inline-block;width:6px;height:6px;margin-right:var(--s-1_5);border-radius:50%;background:var(--prod);vertical-align:middle}
+.p-settings a.env.prod::before{content:"";display:inline-block;width:3px;height:10px;margin-right:var(--s-1_5);border-radius:var(--r-tick);background:var(--prod);vertical-align:middle}
 .p-settings .env-add{display:flex;gap:var(--s-2)}
 .p-settings .env-add>input{flex:1;min-width:0}
 .p-settings .steps{margin:0;padding-left:var(--s-5)}

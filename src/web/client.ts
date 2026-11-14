@@ -21,7 +21,8 @@
 //     focus leaving it; arrow keys move between .menu-item; .row-menu is positioned fixed so table
 //     scroll containers don't clip it (hidden until placed, so it never paints at its static spot);
 //     on scroll/resize it follows its "…" and closes only once that leaves its table or the viewport
-//   [data-dismiss]                                removes the closest .flash
+//   [data-dismiss]                                removes the closest .flash (after a short fade,
+//     skipped under prefers-reduced-motion)
 //   input[data-filter="css selector"]             filters matching elements by their data-filter-text,
 //     else by visible text minus secret values, sr-only/no-JS text and menus; "/" focuses it;
 //     data-filter-empty="#el" is shown when nothing matches, and then the rows' .table-wrap (or table)
@@ -181,7 +182,13 @@ document.documentElement.classList.add("js");
     const s = e.target.closest("[data-select-all]");
     if (s) return s.select();
     const d = e.target.closest("[data-dismiss]");
-    if (d) return d.closest(".flash")?.remove();
+    if (d) {
+      const f = d.closest(".flash");
+      if (!f) return;
+      if (matchMedia("(prefers-reduced-motion:reduce)").matches) return f.remove();
+      f.classList.add("leaving");
+      return setTimeout(() => f.remove(), 120);
+    }
   });
 
   document.addEventListener("toggle", (e) => {
