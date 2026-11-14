@@ -111,3 +111,7 @@ made-up data.
 | `src/openapi.ts` | Hand-written OpenAPI 3.1 spec.                                                                                               |
 | `src/dotenv.ts`  | `.env` parse/format.                                                                                                         |
 | `main.ts`        | Config, `serve`, and `create-admin-key`.                                                                                     |
+
+## License
+
+[MIT](LICENSE)
