@@ -2,7 +2,14 @@ import type { Child, JSX } from "@hono/hono/jsx";
 import { raw as html } from "@hono/hono/html";
 import type { Principal, Project, Role } from "../vault.ts";
 import { CLIENT_JS } from "./client.ts";
-import { CSS } from "./styles.ts";
+import { CSS, FONT_PATH } from "./styles.ts";
+
+/** The Heka mark as a tab icon (fixed colours: it sits on browser chrome, not on the page). */
+const FAVICON = `data:image/svg+xml,${
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b1a38"/><path d="M5 6 10 8v12h12V8l5-2v20H5Z" fill="#f1efe8"/><path d="m16 9.6 4.6 2.6-4.6 2.6-4.6-2.6Z" fill="#e8a83a"/></svg>`,
+  )
+}`;
 
 export type Section = "projects" | "keys" | "audit" | "docs";
 
@@ -38,6 +45,16 @@ export function Layout(
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="color-scheme" content="light dark" />
+          <meta name="theme-color" content="#edebe4" media="(prefers-color-scheme: light)" />
+          <meta name="theme-color" content="#08111f" media="(prefers-color-scheme: dark)" />
+          <link rel="icon" type="image/svg+xml" href={FAVICON} />
+          <link
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            href={`${FONT_PATH}?v=1`}
+            crossorigin="anonymous"
+          />
           <title>{title} · Heka Vault</title>
           <style>{html(layer ? `@layer ${layer}{${CSS}}` : CSS)}</style>
           <script>{html(CLIENT_JS)}</script>
@@ -83,7 +100,9 @@ export function AppHeader(
       <div class="topbar-in">
         <a href="/" class="brand">
           <BrandMark />
-          <span class="brand-name">Heka Vault</span>
+          <span class="brand-name" translate="no">
+            heka <span class="brand-sub">vault</span>
+          </span>
         </a>
         {who && (
           <>
@@ -778,20 +797,12 @@ export function ConfirmDialog() {
   );
 }
 
+/** The Heka mark: the factory gate with the ochre diamond. */
 export function BrandMark() {
   return (
-    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="24" height="24" rx="6" fill="currentColor" />
-      <g
-        fill="none"
-        stroke="var(--bg)"
-        stroke-width="1.75"
-        stroke-linecap="round"
-      >
-        <circle cx="12" cy="12" r="5.25" />
-        <path d="M12 12V9" />
-        <path d="M12 3.75v1.5M12 18.75v1.5M3.75 12h1.5M18.75 12h1.5" />
-      </g>
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M2 3 8.5 5.6V21h15V5.6L30 3v25H2Z" fill="var(--mark)" />
+      <path class="brand-gem" d="m16 8.2 5.6 3.2-5.6 3.2-5.6-3.2Z" fill="var(--gem)" />
     </svg>
   );
 }

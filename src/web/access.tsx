@@ -16,6 +16,7 @@ import {
   PageHeader,
 } from "./layout.tsx";
 import { back, COOKIE, type Env, referer, safePath } from "./shared.tsx";
+import { FONT_PATH } from "./styles.ts";
 
 export const css = `
 .p-login .login-help{margin:var(--s-6) 0 0;color:var(--fg-muted);font-size:var(--text-sm);line-height:var(--lh-sm);text-align:center;text-wrap:balance}
@@ -30,7 +31,17 @@ const SWAGGER_CSS_SRI = "sha384-Ov4/wv3j2bmct8cDc5X4ngJZohVPzEmc6uDPH8WeljUxO5vt
 const SWAGGER_JS_SRI = "sha384-h00llMzD1afyNow1pDmnZKlHsUZgp9KE9HXLFXF2CvbwsBY0+WBO4f75SfGwvM4K";
 
 /** Sign in, sign out, and the API docs. These routes run before authentication. */
+/** The UI typeface (Geologica, SIL OFL; licence next to the file). Read once at startup. */
+const FONT = Deno.readFileSync(new URL("./geologica-latin.woff2", import.meta.url));
+
 export function accessRoutes(web: Hono<Env>, vault: Vault): void {
+  // Public: the sign-in page uses it too. It carries nothing about the vault.
+  web.get(FONT_PATH, (c) =>
+    c.body(FONT, 200, {
+      "content-type": "font/woff2",
+      "cache-control": "public, max-age=31536000, immutable",
+    }));
+
   web.get("/login", (c) => {
     const next = safePath(c.req.query("next")) ?? "/";
     if (vault.authenticate(getCookie(c, COOKIE))) return c.redirect(next);
@@ -312,8 +323,8 @@ html.dark-mode{background:var(--bg)}
 #ui .copy-to-clipboard button{width:100%;height:100%;border-radius:var(--r);background:var(--fg-muted);mask:${COPY} center/16px no-repeat}
 #ui .btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--s-1_5);height:var(--h);padding:0 var(--s-3);border:1px solid var(--border-strong);border-radius:var(--r);background:var(--surface);color:var(--fg);box-shadow:var(--shadow-xs);font-size:var(--text-base);font-weight:500;transition:none}
 #ui .btn:hover{background:var(--bg-hover)}
-#ui :is(.btn.execute,.auth-btn-wrapper .authorize){border-color:transparent;background:var(--inverse);color:var(--fg-on-inverse)}
-#ui :is(.btn.execute,.auth-btn-wrapper .authorize):hover{background:var(--inverse-hover)}
+#ui :is(.btn.execute,.auth-btn-wrapper .authorize){border-color:transparent;background:var(--primary);color:var(--fg-on-primary)}
+#ui :is(.btn.execute,.auth-btn-wrapper .authorize):hover{background:var(--primary-hover)}
 #ui :is(.btn-group,.execute-wrapper){justify-content:flex-start;gap:var(--s-2);padding:var(--s-5);text-align:left}
 #ui :is(.btn-group,.execute-wrapper) .btn{flex:none;width:auto;border-radius:var(--r)}
 #ui .btn svg{width:16px;height:16px;color:var(--fg-muted)}
