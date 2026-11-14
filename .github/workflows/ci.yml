@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          # Keep in step with the Dockerfile's base image.
+          deno-version: 2.9.7
+      - name: Format, lint, and type-check
+        run: deno task check
+      - name: Test
+        run: deno task test
+
+  image:
+    name: Build image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the container image
+        run: docker build --tag heka-vault:ci .
+      - name: Start it and wait for the health endpoint
+        run: |
+          docker run --detach --name vault --publish 8090:8090 heka-vault:ci
+          for _ in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8090/api/v1/health; then exit 0; fi
+            sleep 1
+          done
+          docker logs vault
+          exit 1
