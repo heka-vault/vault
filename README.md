@@ -97,8 +97,10 @@ shows values.
 
 ![Audit log](docs/screenshots/audit.png)
 
-The UI follows the system light or dark setting and works without JavaScript. The screenshots use
-made-up data.
+The UI uses the Heka brand (the palette, typeface, and mark from hekafactory.com), follows the
+system light or dark setting, and works without JavaScript. Its short animations are switched off
+when the system asks for reduced motion. The typeface is served by the vault itself, so pages load
+nothing from a third party except Swagger UI on `/docs`. The screenshots use made-up data.
 
 ## Layout
 
